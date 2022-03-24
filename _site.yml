@@ -1,0 +1,3 @@
+name: "under15"
+output_dir: "docs"
+exclude: ["*.csv"]

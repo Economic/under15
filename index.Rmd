@@ -1,0 +1,194 @@
+---
+title: "Who earns under $15 per hour?"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  message = FALSE,
+  fig.height = 6
+)
+
+library(tidyverse)
+library(lubridate)
+library(haven)
+library(slider)
+library(epiextractr)
+library(epidatatools)
+library(scales)
+library(hrbrthemes)
+
+covariates <- c(
+  "year", "month", "orgwgt", "wageotc",
+  "wbhao", "female", "educ", "age",
+  "married", "paidhre", "mind03", "mocc03",
+  "region"
+)
+groups <- c(
+  "overall", "wbhao", "female", "educ", "region"
+)
+
+org_raw <- load_org(2021:2022, all_of(covariates))
+
+summarized <- org_raw |> 
+  rename(my_wage = wageotc) |> 
+  filter(my_wage > 0) |> 
+  mutate(
+    month_date = ym(paste(year, month)),
+    under15 = if_else(my_wage < 15, 1, 0),
+    overall = labelled(1, c("Overall" = 1))
+  ) |> 
+  group_by(month_date) |> 
+  summarize_groups(
+    all_of(groups),
+    under15_share = weighted.mean(under15, w = orgwgt),
+    under15_count = sum(under15 * orgwgt / 10^6)
+  ) |> 
+  group_by(group_name, group_value) |> 
+  # 12 month rolling average
+  mutate(
+    across(
+      starts_with("under15"),
+      ~ slider::slide_period_dbl(.x,
+                                 month_date, 
+                                 "month", 
+                                 mean, 
+                                 .before = 2,
+                                 .after = 0,
+                                 .complete = TRUE),
+      .names = "{.col}_ma"
+    )
+  ) |> 
+  ungroup() |>  
+  pivot_longer(starts_with("under15")) |> 
+  filter(str_detect(name, "share_ma|count_ma")) |> 
+  filter(month_date == ym("2022m2")) 
+
+
+max_date <- max(summarized$month_date)
+min_date <- max_date - months(2)
+date_range <- paste(
+  format(min_date, format = "%B %Y"), 
+  "through", 
+  format(max_date, format = "%B %Y")
+)
+
+count_overall <- summarized |> 
+  filter(group_name == "overall" & name == "under15_count_ma") |> 
+  pull() |> 
+  number(accuracy = 0.1)
+
+share_overall <- summarized |> 
+  filter(group_name == "overall" & name == "under15_share_ma") |> 
+  pull() |> 
+  percent(accuracy = 0.1)
+
+bar_plot <- function(df, category, title, bar_width = NULL, label_angle = NULL) {
+  df <- df |> 
+    filter(group_name == category) |> 
+    filter(name == "under15_share_ma") |> 
+    mutate(group = reorder(group_value_label, -value))
+
+  if (is.null(bar_width)) bar_width <- 0.7 / 5 * nrow(df)
+  if (is.null(label_angle)) {
+    label_angle <- 0
+    hjust_val <- 0.5
+  }
+  else hjust_val <- 1
+
+  df |> 
+    ggplot(aes(x = group, y = value, fill = group)) +
+    geom_bar( 
+      stat = "identity", 
+      width = bar_width
+    ) +
+    geom_text(aes(label=percent(value, accuracy = 1)), position=position_dodge(width=0.9), vjust=-0.40) +
+    scale_y_continuous(
+      limits=c(0, 0.50), 
+      labels = label_percent(accuracy = 1)
+    ) +
+    labs(
+      title = title
+    ) +
+    xlab("") + ylab("") +
+    theme_ipsum() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = label_angle, hjust = hjust_val),
+      panel.grid.major.x = element_blank()
+    ) +
+    scale_fill_viridis_d() 
+}
+
+table_counts <- function(df, category, title) {
+  summarized |> 
+  filter(group_name == category) |> 
+  filter(name == "under15_count_ma") |> 
+  mutate(group = reorder(group_value_label, -value)) |> 
+  mutate(value = comma(round(value * 10) * 10^5), accuracy = 1) |> 
+  select(group, value) |> 
+  knitr::kable(
+    col.names = c(title, "Earning under $15")
+  )
+}
+
+```
+
+On average, `r count_overall` million workers earned less than $15/hour during the last three months, about `r share_overall` of the workforce.
+
+Data from the EPI extracts of the CPS-ORG, `r date_range`.
+
+<div class = "row">
+<div class = "col-md-8">
+```{r}
+bar_plot(summarized, "wbhao", "Race")
+```
+</div>
+<div class = "col-md-4">
+```{r}
+table_counts(summarized, "wbhao", "Race")
+```
+</div>
+</div>
+
+<div class = "row">
+<div class = "col-md-8">
+```{r}
+bar_plot(summarized, "female", "Gender")
+```
+</div>
+<div class = "col-md-4">
+```{r}
+table_counts(summarized, "female", "Gender")
+```
+</div>
+</div>
+
+<div class = "row">
+<div class = "col-md-8">
+```{r}
+bar_plot(summarized, "educ", "Education")
+```
+</div>
+<div class = "col-md-4">
+```{r}
+table_counts(summarized, "educ", "Education")
+```
+</div>
+</div>
+
+
+<div class = "row">
+<div class = "col-md-8">
+```{r}
+bar_plot(summarized, "region", "Census region")
+```
+</div>
+<div class = "col-md-4">
+```{r}
+table_counts(summarized, "region", "Census region")
+```
+</div>
+</div>
+
+
