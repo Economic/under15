@@ -180,7 +180,7 @@ select_filter <- function(id, label, shared_data, group, choices = NULL,
 total_low_wage <- low_wage_data |> 
   filter(category == "All workers") |> 
   pull(count) 
-total_low_wage <- round(total_low_wage/10^6, 1)
+total_low_wage <- round(total_low_wage/10^6)
 
 data_dates <- low_wage_data |> 
   filter(row_number() == 1) |> 
