@@ -1,197 +1,359 @@
 ---
-title: "Who earns under $15 per hour?"
+output: html_document
+resource_files:
+  - '.'
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  echo = FALSE, 
-  message = FALSE,
-  fig.height = 6,
-  dev = 'svg'
-)
+knitr::opts_chunk$set(echo = TRUE)
 
+# the code below is modified from 
+# https://glin.github.io/reactable/articles/popular-movies/popular-movies.html. 
+# thank you, reactable!
+
+```
+
+```{r table, echo=FALSE, message=FALSE}
+library(reactable)
+library(jsonlite)
 library(tidyverse)
-library(lubridate)
-library(haven)
-library(slider)
-library(epiextractr)
-library(epidatatools)
-library(scales)
-library(hrbrthemes)
+library(crosstalk)
+library(htmltools)
+library(crosstool)
 
-covariates <- c(
-  "year", "month", "orgwgt", "wageotc", "wage",
-  "wbhao", "female", "educ", "age",
-  "married", "paidhre", "mind03", "mocc03",
-  "region"
-)
-groups <- c(
-  "overall", "wbhao", "female", "educ", "region"
-)
-
-org_raw <- load_org(2022:2022, all_of(covariates))
-
-summarized <- org_raw |> 
-  rename(my_wage = wageotc) |> 
-  filter(my_wage > 0) |> 
-  mutate(
-    month_date = ym(paste(year, month)),
-    under15 = if_else(my_wage < 15, 1, 0),
-    overall = labelled(1, c("Overall" = 1))
-  ) |> 
-  group_by(month_date) |> 
-  summarize_groups(
-    all_of(groups),
-    under15_share = weighted.mean(under15, w = orgwgt),
-    under15_count = sum(under15 * orgwgt / 10^6)
-  ) |> 
-  group_by(group_name, group_value) |> 
-  # 12 month rolling average
-  mutate(
-    across(
-      starts_with("under15"),
-      ~ slider::slide_period_dbl(.x,
-                                 month_date, 
-                                 "month", 
-                                 mean, 
-                                 .before = 2,
-                                 .after = 0,
-                                 .complete = TRUE),
-      .names = "{.col}_ma"
+low_wage_data <- read_csv("low_wage_data.csv") |>
+  select(
+      category, 
+      category_group, 
+      share = low_wage_share, 
+      count = low_wage_count,
+      low_wage_threshold,
+      dates
     )
-  ) |> 
-  ungroup() |>  
-  pivot_longer(starts_with("under15")) |> 
-  filter(str_detect(name, "share_ma|count_ma"))
 
-max_date <- max(summarized$month_date)
-min_date <- max_date - months(2)
+table_data <- low_wage_data 
 
-summarized_one_month <- summarized  |> 
-  filter(month_date == max_date) 
+get_share_color <- function(share) {
+  my_pal <- function(x) rgb(colorRamp(c("#f58a61", "#d4214a"))(x), maxColorValue = 255)
+  normalized <- (share - min(share)) / (max(share) - min(share))
+  my_pal(normalized)
+}
+table_data <- mutate(table_data, share_color = get_share_color(share))
 
-date_range <- paste(
-  format(min_date, format = "%B %Y"), 
-  "through", 
-  format(max_date, format = "%B %Y")
+# Shared data for the table
+shared_data_new <- SharedData$new(table_data)
+
+# Shared data for the Crosstalk filters. This is a separate shared data object
+# so we can filter on columns that aren't in the table. The same group is used
+# to link the two datasets together.
+shared_wages <- SharedData$new(low_wage_data, group = shared_data_new$groupName())
+
+table <- reactable(
+  shared_data_new,
+  defaultColDef = colDef(vAlign = "center", headerClass = "header"),
+  columns = list(
+    category = colDef(
+      name = "Group",
+      align = "right",
+      minWidth = 150
+    ),
+    share = colDef(
+      name = "Share of workers<br/>paid less than $15",
+      defaultSortOrder = "desc",
+      cell = JS("renderShare"),
+      html = TRUE,
+      align = "center",
+      class = "user-score"
+    ),
+    count = colDef(
+      name = "Number of workers<br/>paid less than $15",
+      html = TRUE,
+      align = "left",
+      minWidth = 150,
+      format = colFormat(separators = TRUE)
+    ),
+    category_group = colDef(show = FALSE),
+    dates = colDef(show = FALSE),
+    share_color = colDef(show = FALSE),
+    low_wage_threshold = colDef(show = FALSE),
+    dates = colDef(show=FALSE)
+  ),
+  highlight = TRUE,
+  theme = reactableTheme(
+    highlightColor = "#f3fafb",
+    borderColor = "hsl(0, 0%, 93%)",
+    headerStyle = list(borderColor = "hsl(0, 0%, 90%)")
+  ),
+  class = "movies-tbl",
+  width = "auto",
+  pagination = FALSE
 )
+```
 
-count_overall <- summarized_one_month |> 
-  filter(group_name == "overall" & name == "under15_count_ma") |> 
-  pull() |> 
-  number(accuracy = 0.1)
+```{js table_js, echo=FALSE}
+// Custom JavaScript cell renderer for the donut
+function renderShare(cellInfo) {
+  return donutChart(cellInfo.value, cellInfo.row['share_color'])
+}
 
-share_overall <- summarized_one_month |> 
-  filter(group_name == "overall" & name == "under15_share_ma") |> 
-  pull() |> 
-  percent(accuracy = 0.1)
+// Generates HTML for a donut chart given a percentage value (out of 100) and color
+function donutChart(value, color) {
+  // All units are in rem for relative scaling
+  const radius = 3.5
+  const diameter = 9.75
+  const center = diameter / 2
+  const width = 2.5
+  const sliceLength = 2 * Math.PI * radius
+  const sliceOffset = sliceLength * (1 - value / 100)
+  const donutChart = `
+    <svg width="${diameter}rem" height="${diameter}rem" style="transform: rotate(-90deg)" focusable="false">
+      <circle cx="${center}rem" cy="${center}rem" r="${radius}rem" fill="none" stroke-width="${width}rem" stroke="rgba(0,0,0,0.1)"></circle>
+      <circle cx="${center}rem" cy="${center}rem" r="${radius}rem" fill="none" stroke-width="${width}rem" stroke="${color}"
+       stroke-dasharray="${sliceLength}rem" stroke-dashoffset="${sliceOffset}rem"></circle>
+    </svg>
+  `
+  const label = `
+    <div style="position: absolute; top: 49%; left: 52%; transform: translate(-50%, -50%)">
+      ${value}%
+    </div>
+  `
+  return `
+    <div style="display: inline-flex; position: relative">
+      ${donutChart}
+      ${label}
+    </div>
+  `
+}
+```
 
-bar_plot <- function(df, category, title, bar_width = NULL, label_angle = NULL) {
-  df <- df |> 
-    filter(group_name == category) |> 
-    filter(name == "under15_share_ma") |> 
-    mutate(group = reorder(group_value_label, -value))
-
-  if (is.null(bar_width)) bar_width <- 0.7 / 5 * nrow(df)
-  if (is.null(label_angle)) {
-    label_angle <- 0
-    hjust_val <- 0.5
+```{r filters, echo=FALSE}
+# Custom Crosstalk select filter. This is a single-select input that works
+# on columns containing multiple values per row (list columns).
+select_filter <- function(id, label, shared_data, group, choices = NULL,
+                          width = "100%", class = "filter-input") {
+  values <- shared_data$data()[[group]]
+  keys <- shared_data$key()
+  if (is.list(values)) {
+    # Multiple values per row
+    flat_keys <- unlist(mapply(rep, keys, sapply(values, length)))
+    keys_by_value <- split(flat_keys, unlist(values), drop = TRUE)
+    choices <- if (is.null(choices)) sort(unique(unlist(values))) else choices
+  } else {
+    # Single value per row
+    keys_by_value <- split(seq_along(keys), values, drop = TRUE)
+    choices <- if (is.null(choices)) sort(unique(values)) else choices
   }
-  else hjust_val <- 1
 
-  df |> 
-    ggplot(aes(x = group, y = value, fill = group)) +
-    geom_bar( 
-      stat = "identity", 
-      width = bar_width
-    ) +
-    geom_text(aes(label=percent(value, accuracy = 1)), position=position_dodge(width=0.9), vjust=-0.40) +
-    scale_y_continuous(
-      limits=c(0, 0.50), 
-      labels = label_percent(accuracy = 1)
-    ) +
-    labs(
-      title = title
-    ) +
-    xlab("") + ylab("") +
-    theme_ipsum() +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = label_angle, hjust = hjust_val),
-      panel.grid.major.x = element_blank()
-    ) +
-    scale_fill_viridis_d() 
+  script <- sprintf("
+    window['__ct__%s'] = (function() {
+      const handle = new window.crosstalk.FilterHandle('%s')
+      const keys = %s
+      return {
+        filter: function(value) {
+          if (!value) {
+            handle.clear()
+          } else {
+            handle.set(keys[value])
+          }
+        }
+      }
+    })()
+  ", id, shared_data$groupName(), toJSON(keys_by_value))
+
+  div(
+    class = class,
+    tags$label(`for` = id, label),
+    tags$select(
+      id = id,
+      onchange = sprintf("window['__ct__%s'].filter(this.value)", id),
+      style = sprintf("width: %s", validateCssUnit(width)),
+      tags$option(value = "", "All categories"),
+      lapply(choices, function(value) tags$option(value = value, value))
+    ),
+    tags$script(HTML(script))
+  )
+}
+```
+
+```{r text_calculations, echo = FALSE}
+total_low_wage <- low_wage_data |> 
+  filter(category == "All workers") |> 
+  pull(count) 
+total_low_wage <- round(total_low_wage/10^6, 1)
+
+data_dates <- low_wage_data |> 
+  filter(row_number() == 1) |> 
+  pull(dates)
+```
+# `r total_low_wage` million workers are paid less than $15 per hour
+```{r output, echo=FALSE}
+div(
+  class = "movies",
+  div(
+    class = "filters",
+    select_filter("filter_genres", "Select a group of workers", shared_data_new, "category_group")
+  ),
+  #tags$hr(),
+  table
+)
+```
+
+
+---
+Source: Analysis by [Ben Zipperer](https://www.epi.org/people/ben-zipperer/) of the Economic Policy Institute Current Population Survey [extracts](https://microdata.epi.org/), `r data_dates`. Wages include overtime, tips, and commissions. Download the [data](low_wage_data.csv) shown in the figure above or the [code](https://github.com/Economic/under15) that produces it.
+
+```{css echo=FALSE}
+body {
+max-width: 900px;
+ margin: auto;
+ padding: 1em;
+}   
+
+/* Font from https://fontsarena.com/hanken-grotesk-by-hanken-design-co/ */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  src: url("fonts/HKGrotesk-Regular.woff2") format("woff2"),
+       url("fonts/HKGrotesk-Regular.woff") format("woff");
 }
 
-table_counts <- function(df, category, title) {
-  df |> 
-    filter(group_name == category) |> 
-    filter(name == "under15_count_ma") |> 
-    mutate(group = reorder(group_value_label, -value)) |> 
-    mutate(value = comma(round(value * 10) * 10^5), accuracy = 1) |> 
-    select(group, value) |> 
-    knitr::kable(
-      col.names = c(title, "Earning under $15")
-    )
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  src: url("fonts/HKGrotesk-SemiBold.woff2") format("woff2"),
+       url("fonts/HKGrotesk-SemiBold.woff") format("woff");
 }
 
+@font-face {
+  font-family: 'Hanken Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  src: url("fonts/HKGrotesk-Bold.woff2") format("woff2"),
+       url("fonts/HKGrotesk-Bold.woff") format("woff");
+}
+
+.movies {
+  font-family: 'Hanken Grotesk', Helvetica, Arial, sans-serif;
+}
+
+.movies h2 {
+  font-weight: 600;
+}
+
+.movies a {
+  color: #007899;
+  text-decoration: none;
+}
+
+.movies a:hover,
+.movies a:focus {
+  text-decoration: underline;
+  text-decoration-thickness: max(1px, 0.0625rem);
+}
+
+.movies-tbl {
+  margin-top: 1rem;
+  font-size: 1.5rem;
+}
+
+.header {
+  color: hsl(0, 0%, 45%);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.header:hover[aria-sort],
+.header[aria-sort='ascending'],
+.header[aria-sort='descending'] {
+  color: hsl(0, 0%, 5%);
+}
+
+.movie-info {
+  display: flex;
+  align-items: center;
+}
+
+.movie-info-text {
+  margin-left: 0.75rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movie-info-details {
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: hsl(0, 0%, 40%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movie-poster {
+  width: 45px;
+  height: 68px;
+  box-shadow: 0 0 0 1px hsl(0, 0%, 95%);
+}
+
+.movie-runtime {
+  display: inline-block;
+}
+
+.movie-rating {
+  margin-right: 0.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid hsl(0, 0%, 75%);
+  border-radius: 2px;
+}
+
+.user-score {
+  font-weight: 600;
+  font-size: 1.75rem;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  margin-left: -32px;
+}
+
+.filter-input {
+  margin-top: 0.5rem;
+  margin-left: 32px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.filter-input label {
+  color: hsl(0, 0%, 45%);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.filter-input select,
+.filter-input input[type="search"] {
+  padding: 0 0.375rem;
+  height: 2rem;
+}
+
+.filter-input input[type="search"] {
+  /* Revert Bootstrap 5's Reboot styles, which change native search input styling */
+  -webkit-appearance: searchfield;
+  outline-offset: revert;
+  border-color: revert;
+}
 ```
 
-On average, `r count_overall` million workers earned less than $15/hour during the last three months, about `r share_overall` of the workforce.
-
-Analysis by Ben Zipperer of the EPI extracts of the CPS-ORG, `r date_range`.
-
-<div class = "row">
-<div class = "col-md-8">
-```{r}
-bar_plot(summarized_one_month, "wbhao", "Race")
+```{css echo=FALSE}
+/* pkgdown articles */
+.row > main {
+  max-width: 940px;
+}
 ```
-</div>
-<div class = "col-md-4">
-```{r}
-table_counts(summarized_one_month, "wbhao", "Race")
-```
-</div>
-</div>
-
-<div class = "row">
-<div class = "col-md-8">
-```{r}
-bar_plot(summarized_one_month, "female", "Gender")
-```
-</div>
-<div class = "col-md-4">
-```{r}
-table_counts(summarized_one_month, "female", "Gender")
-```
-</div>
-</div>
-
-<div class = "row">
-<div class = "col-md-8">
-```{r}
-bar_plot(summarized_one_month, "educ", "Education")
-```
-</div>
-<div class = "col-md-4">
-```{r}
-table_counts(summarized_one_month, "educ", "Education")
-```
-</div>
-</div>
-
-
-<div class = "row">
-<div class = "col-md-8">
-```{r}
-bar_plot(summarized_one_month, "region", "Census region")
-```
-</div>
-<div class = "col-md-4">
-```{r}
-table_counts(summarized_one_month, "region", "Census region")
-```
-</div>
-</div>
-
- 
