@@ -186,7 +186,11 @@ data_dates <- low_wage_data |>
   filter(row_number() == 1) |> 
   pull(dates)
 ```
-# `r total_low_wage` million workers are paid less than $15 per hour
+
+---
+title: `r total_low_wage` million workers are paid less than $15 per hour
+---
+
 ```{r output, echo=FALSE}
 div(
   class = "movies",
