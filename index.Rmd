@@ -86,7 +86,8 @@ table <- reactable(
   ),
   class = "movies-tbl",
   width = "auto",
-  pagination = FALSE
+  pagination = FALSE,
+  elementId = "htmlwidget-1"
 )
 ```
 
