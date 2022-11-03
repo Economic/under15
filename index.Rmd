@@ -63,13 +63,14 @@ table <- reactable(
       cell = JS("renderShare"),
       html = TRUE,
       align = "center",
-      class = "user-score"
+      class = "user-score",
+      minWidth = 200
     ),
     count = colDef(
       name = "Number of workers<br/>paid less than $15",
       html = TRUE,
       align = "left",
-      minWidth = 150,
+      minWidth = 200,
       format = colFormat(separators = TRUE)
     ),
     category_group = colDef(show = FALSE),
@@ -209,7 +210,7 @@ Source: Analysis by [Ben Zipperer](https://www.epi.org/people/ben-zipperer/) of 
 
 ```{css echo=FALSE}
 body {
-max-width: 900px;
+ max-width: 1000px;
  margin: auto;
  padding: 1em;
 }   
@@ -241,6 +242,8 @@ max-width: 900px;
 
 .movies {
   font-family: 'Hanken Grotesk', Helvetica, Arial, sans-serif;
+  width: 600px;
+  margin: 0 auto;
 }
 
 .movies h2 {
@@ -269,6 +272,11 @@ max-width: 900px;
   font-size: 1.25rem;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+  padding: 0;
+}
+
+.title {
+  text-align: center;
 }
 
 .header:hover[aria-sort],
@@ -325,6 +333,7 @@ max-width: 900px;
   flex-wrap: wrap;
   margin-top: 1rem;
   margin-left: -32px;
+  text-align: left;
 }
 
 .filter-input {
