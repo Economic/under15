@@ -11,8 +11,9 @@
 
 
 
-<title>22 million workers are paid less than $15 per hour</title>
+<title>21 million workers are paid less than $15 per hour</title>
 
+<script src="site_libs/header-attrs-2.18/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -36,7 +37,8 @@
 <script src="site_libs/react-17.0.0/react-dom.min.js"></script>
 <script src="site_libs/reactwidget-1.0.0/react-tools.js"></script>
 <script src="site_libs/htmlwidgets-1.5.4/htmlwidgets.js"></script>
-<script src="site_libs/reactable-binding-0.3.0/reactable.js"></script>
+<link href="site_libs/reactable-0.4.1/reactable.css" rel="stylesheet" />
+<script src="site_libs/reactable-binding-0.4.1/reactable.js"></script>
 <link href="site_libs/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet" />
 <script src="site_libs/crosstalk-1.2.0/js/crosstalk.min.js"></script>
 
@@ -111,8 +113,8 @@ pre code {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -120,16 +122,9 @@ pre code {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -174,7 +169,8 @@ pre code {
 
 
 
-<h1 class="title toc-ignore">22 million workers are paid less than $15 per hour</h1>
+<h1 class="title toc-ignore">21 million workers are paid less than $15
+per hour</h1>
 
 </div>
 
@@ -229,7 +225,7 @@ function donutChart(value, color) {
 </select>
 <script>
     window['__ct__filter_genres'] = (function() {
-      const handle = new window.crosstalk.FilterHandle('SharedData8b75c5e5')
+      const handle = new window.crosstalk.FilterHandle('SharedData5bbc1009')
       const keys = {"All workers":[1],"Education":[8,9,10,11],"Gender":[6,7],"Part-time status":[12,13],"Race and ethnicity":[2,3,4,5],"Union status":[14,15]}
       return {
         filter: function(value) {
@@ -245,10 +241,17 @@ function donutChart(value, color) {
 </div>
 </div>
 <div id="htmlwidget-1" class="reactable html-widget" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-1">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"category":["All workers","Black","Hispanic","White","Asian","Female","Male","Less than high school diploma","High school diploma","Some college","College or advanced degree","Works part-time","Works full-time","Not in a union","In a union"],"category_group":["All workers","Race and ethnicity","Race and ethnicity","Race and ethnicity","Race and ethnicity","Gender","Gender","Education","Education","Education","Education","Part-time status","Part-time status","Union status","Union status"],"share":[16,21,21,14,11,19,13,43,21,18,6,41,11,17,7],"count":[22073000,3774000,5374000,11432000,1194000,12893000,9179000,4586000,7832000,6434000,3220000,8674000,13398000,20956000,1116000],"low_wage_threshold":[15,15,15,15,15,15,15,15,15,15,15,15,15,15,15],"dates":["October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022","October 2021 through September 2022"],"share_color":["#EC6D5A","#E75F57","#E75F57","#ED735C","#F07B5D","#E96558","#EE765C","#D4214A","#E75F57","#EA6759","#F58A61","#D5264B","#F07B5D","#EB6A5A","#F48760"]},"columns":[{"accessor":"category","name":"Group","type":"character","vAlign":"center","headerClassName":"header","minWidth":150,"align":"right"},{"accessor":"category_group","name":"category_group","type":"character","vAlign":"center","headerClassName":"header","show":false},{"accessor":"share","name":"Share of workers<br/>paid less than $15","type":"numeric","vAlign":"center","headerClassName":"header","defaultSortDesc":true,"cell":"renderShare","html":true,"minWidth":200,"align":"center","className":"user-score"},{"accessor":"count","name":"Number of workers<br/>paid less than $15","type":"numeric","vAlign":"center","headerClassName":"header","format":{"cell":{"separators":true},"aggregated":{"separators":true}},"html":true,"minWidth":200,"align":"left"},{"accessor":"low_wage_threshold","name":"low_wage_threshold","type":"numeric","vAlign":"center","headerClassName":"header","show":false},{"accessor":"dates","name":"dates","type":"character","vAlign":"center","headerClassName":"header","show":false},{"accessor":"share_color","name":"share_color","type":"character","vAlign":"center","headerClassName":"header","show":false}],"pagination":false,"defaultPageSize":10,"paginationType":"numbers","showPageInfo":true,"minRows":1,"highlight":true,"className":"movies-tbl","theme":{"borderColor":"hsl(0, 0%, 93%)","highlightColor":"#f3fafb","headerStyle":{"borderColor":"hsl(0, 0%, 90%)"}},"crosstalkKey":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"],"crosstalkGroup":"SharedData8b75c5e5","elementId":"htmlwidget-1","dataKey":"eca9e5d7407b51814fb180ddd53e1730"},"children":[]},"class":"reactR_markup"},"evals":["tag.attribs.columns.2.cell"],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"category":["All workers","Black","Hispanic","White","Asian","Female","Male","Less than high school diploma","High school diploma","Some college","College or advanced degree","Works part-time","Works full-time","Not in a union","In a union"],"category_group":["All workers","Race and ethnicity","Race and ethnicity","Race and ethnicity","Race and ethnicity","Gender","Gender","Education","Education","Education","Education","Part-time status","Part-time status","Union status","Union status"],"share":[15,20,20,13,11,18,12,42,20,17,5,39,11,16,6],"count":[21113000,3637000,5151000,10917000,1119000,12358000,8755000,4484000,7399000,6189000,3042000,8401000,12712000,20084000,1029000],"low_wage_threshold":[15,15,15,15,15,15,15,15,15,15,15,15,15,15,15],"dates":["December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022","December 2021 through November 2022"],"share_color":["#EC6D5A","#E75F57","#E75F57","#ED735C","#EF785D","#E96558","#EE765C","#D4214A","#E75F57","#EA6759","#F58A61","#D6294B","#EF785D","#EB6A5A","#F48760"]},"columns":[{"id":"category","name":"Group","type":"character","vAlign":"center","headerClassName":"header","minWidth":150,"align":"right"},{"id":"category_group","name":"category_group","type":"character","vAlign":"center","headerClassName":"header","show":false},{"id":"share","name":"Share of workers<br/>paid less than $15","type":"numeric","vAlign":"center","headerClassName":"header","defaultSortDesc":true,"cell":"renderShare","html":true,"minWidth":200,"align":"center","className":"user-score"},{"id":"count","name":"Number of workers<br/>paid less than $15","type":"numeric","vAlign":"center","headerClassName":"header","format":{"cell":{"separators":true},"aggregated":{"separators":true}},"html":true,"minWidth":200,"align":"left"},{"id":"low_wage_threshold","name":"low_wage_threshold","type":"numeric","vAlign":"center","headerClassName":"header","show":false},{"id":"dates","name":"dates","type":"character","vAlign":"center","headerClassName":"header","show":false},{"id":"share_color","name":"share_color","type":"character","vAlign":"center","headerClassName":"header","show":false}],"pagination":false,"highlight":true,"className":"movies-tbl","width":"auto","theme":{"borderColor":"hsl(0, 0%, 93%)","highlightColor":"#f3fafb","headerStyle":{"borderColor":"hsl(0, 0%, 90%)"}},"crosstalkKey":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"],"crosstalkGroup":"SharedData5bbc1009","elementId":"htmlwidget-1","dataKey":"e335d92d3954408844173699879bb866"},"children":[]},"class":"reactR_markup"},"evals":["tag.attribs.columns.2.cell"],"jsHooks":[]}</script>
 </div>
 <hr />
-<p>Source: Analysis by <a href="https://www.epi.org/people/ben-zipperer/">Ben Zipperer</a> of the Economic Policy Institute Current Population Survey <a href="https://microdata.epi.org/">extracts</a>, October 2021 through September 2022. Wages include overtime, tips, and commissions. Download the <a href="low_wage_data.csv">data</a> shown in the figure above or the <a href="https://github.com/Economic/under15">code</a> that produces it.</p>
+<p>Source: Analysis by <a
+href="https://www.epi.org/people/ben-zipperer/">Ben Zipperer</a> of the
+Economic Policy Institute Current Population Survey <a
+href="https://microdata.epi.org/">extracts</a>, December 2021 through
+November 2022. Wages include overtime, tips, and commissions. Download
+the <a href="low_wage_data.csv">data</a> shown in the figure above or
+the <a href="https://github.com/Economic/under15">code</a> that produces
+it.</p>
 <style type="text/css">
 body {
  max-width: 1000px;
