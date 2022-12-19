@@ -1,16 +1,22 @@
 category,category_group,low_wage_share,low_wage_threshold,low_wage_count,dates,priority
 All workers,All workers,15,15,21113000,December 2021 through November 2022,100
+Asian,Race and ethnicity,11,15,1119000,December 2021 through November 2022,99
 Black,Race and ethnicity,20,15,3637000,December 2021 through November 2022,99
 Hispanic,Race and ethnicity,20,15,5151000,December 2021 through November 2022,99
 White,Race and ethnicity,13,15,10917000,December 2021 through November 2022,99
-Asian,Race and ethnicity,11,15,1119000,December 2021 through November 2022,99
 Female,Gender,18,15,12358000,December 2021 through November 2022,98
 Male,Gender,12,15,8755000,December 2021 through November 2022,98
-Less than high school diploma,Education,42,15,4484000,December 2021 through November 2022,0
-High school diploma,Education,20,15,7399000,December 2021 through November 2022,0
-Some college,Education,17,15,6189000,December 2021 through November 2022,0
+Ages 16-24,Age group,38,15,7042000,December 2021 through November 2022,2
+Ages 25-34,Age group,12,15,4038000,December 2021 through November 2022,2
+Ages 35-44,Age group,10,15,3091000,December 2021 through November 2022,2
+Ages 45-54,Age group,10,15,2704000,December 2021 through November 2022,2
+Ages 55-64,Age group,12,15,2691000,December 2021 through November 2022,2
+Ages 65 and above,Age group,20,15,1547000,December 2021 through November 2022,1
 College or advanced degree,Education,5,15,3042000,December 2021 through November 2022,0
-Works part-time,Part-time status,39,15,8401000,December 2021 through November 2022,0
+High school diploma,Education,20,15,7399000,December 2021 through November 2022,0
+Less than high school diploma,Education,42,15,4484000,December 2021 through November 2022,0
+Some college,Education,17,15,6189000,December 2021 through November 2022,0
 Works full-time,Part-time status,11,15,12712000,December 2021 through November 2022,0
-Not in a union,Union status,16,15,20084000,December 2021 through November 2022,0
+Works part-time,Part-time status,39,15,8401000,December 2021 through November 2022,0
 In a union,Union status,6,15,1029000,December 2021 through November 2022,0
+Not in a union,Union status,16,15,20084000,December 2021 through November 2022,0
